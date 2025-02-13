@@ -197,14 +197,16 @@ function Borrowers() {
             {filteredBorrowers.length > 0 ? (
               filteredBorrowers.map((borrower) => (
                 <tr key={borrower.id}>
-                  <td>{borrower.name}</td>
+                  <td>{borrower?.name}</td>
                   <td
-                    className={borrower.fullyPaid ? "bg-success" : "bg-warning"}
+                    className={
+                      borrower?.fullyPaid ? "bg-success" : "bg-warning"
+                    }
                   >
-                    {borrower.fullyPaid ? "Fully Paid" : "Partially Paid"}
+                    {borrower?.fullyPaid ? "Fully Paid" : "Partially Paid"}
                   </td>
                   <td>
-                    <Link to={`/details/${borrower.id}`}>
+                    <Link to={`/details/${borrower?.id}`}>
                       <button className="btn btn-sm btn-primary">
                         <i className="bi bi-eye"></i>
                       </button>{" "}

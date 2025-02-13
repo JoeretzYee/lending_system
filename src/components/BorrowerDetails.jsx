@@ -171,45 +171,6 @@ function BorrowerDetails() {
     XLSX.writeFile(wb, `${borrower.name}_report.xlsx`);
   };
 
-  //   const generateReport = () => {
-  //     const wsData = [
-  //       // Borrower Details
-  //       ["Name", borrower.name],
-  //       ["Principal", formatNumberWithCommas(borrower.principalAmount)],
-  //       ["Term", borrower.term],
-  //       ["Total", formatNumberWithCommas(borrower.total)],
-  //       [
-  //         "Remaining Balance",
-  //         borrower.remainingBalance === 0
-  //           ? "0"
-  //           : formatNumberWithCommas(borrower.remainingBalance),
-  //       ],
-  //       ["", ""], // Empty row between borrower and payment history
-
-  //       // Payment History
-  //       ["Payment Date", "Amount", "Remaining Balance"],
-  //     ];
-
-  //     // Add payments history data
-  //     paymentsHistory.forEach((payment) => {
-  //       wsData.push([
-  //         new Date(payment.paymentDate.seconds * 1000).toLocaleDateString(),
-  //         formatNumberWithCommas(payment.amount),
-  //         payment.remainingBalance === 0
-  //           ? "0"
-  //           : formatNumberWithCommas(payment.remainingBalance),
-  //       ]);
-  //     });
-
-  //     // Create a new workbook
-  //     const ws = XLSX.utils.aoa_to_sheet(wsData);
-  //     const wb = XLSX.utils.book_new();
-  //     XLSX.utils.book_append_sheet(wb, ws, "Report");
-
-  //     // Export the file
-  //     XLSX.writeFile(wb, `${borrower.name}_report.xlsx`);
-  //   };
-
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between mb-4">
@@ -228,23 +189,23 @@ function BorrowerDetails() {
         <div className="container">
           <ul className="list-group">
             <li className="list-group-item active" aria-current="true">
-              <h1> {borrower.name}</h1>
+              <h1> {borrower?.name}</h1>
             </li>
             <li className="list-group-item d-flex align-items-center justify-content-center">
               <h5>Principal:</h5>&nbsp;{" "}
-              <h6>{formatNumberWithCommas(borrower.principalAmount)}</h6>
+              <h6>{formatNumberWithCommas(borrower?.principalAmount)}</h6>
             </li>
             <li className="list-group-item d-flex align-items-center justify-content-center">
-              <h5>Term:</h5>&nbsp; <h6>{borrower.term}</h6>
+              <h5>Term:</h5>&nbsp; <h6>{borrower?.term}</h6>
             </li>
             <li className="list-group-item d-flex align-items-center justify-content-center">
               <h5>Total:</h5>&nbsp;{" "}
-              <h6>{formatNumberWithCommas(borrower.total)}</h6>
+              <h6>{formatNumberWithCommas(borrower?.total)}</h6>
             </li>
             <li className="list-group-item d-flex align-items-center justify-content-center">
               <h5>Remaining Balance:</h5>&nbsp;{" "}
               <h6>
-                {borrower.remainingBalance === 0
+                {borrower?.remainingBalance === 0
                   ? "0"
                   : formatNumberWithCommas(borrower.remainingBalance)}
               </h6>
@@ -274,14 +235,14 @@ function BorrowerDetails() {
                   <tr key={index}>
                     <td>
                       {new Date(
-                        payment.paymentDate.seconds * 1000
+                        payment?.paymentDate.seconds * 1000
                       ).toLocaleDateString()}
                     </td>
-                    <td>{formatNumberWithCommas(payment.amount)}</td>
+                    <td>{formatNumberWithCommas(payment?.amount)}</td>
                     <td>
-                      {payment.remainingBalance === 0
+                      {payment?.remainingBalance === 0
                         ? "0"
-                        : formatNumberWithCommas(payment.remainingBalance)}
+                        : formatNumberWithCommas(payment?.remainingBalance)}
                     </td>
                   </tr>
                 ))}
