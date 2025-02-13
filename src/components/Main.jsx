@@ -1,6 +1,7 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 import Borrowers from "./Borrowers";
+import BorrowerDetails from "./BorrowerDetails";
 
 function Main() {
   return (
@@ -11,6 +12,7 @@ function Main() {
         <Routes>
           <Route path="/" element={<Borrowers />} />
           <Route path="/borrowers" element={<Borrowers />} />
+          <Route path="/details/:id" element={<BorrowerDetails />} />
         </Routes>
       </div>
     </div>
