@@ -37,6 +37,12 @@ function Borrowers() {
     return () => unsubscribe(); // Cleanup on unmount
   }, []);
 
+  // Calculate total remaining balance
+  const totalRemainingBalance = borrowers.reduce(
+    (sum, borrower) => sum + (Number(borrower.remainingBalance) || 0),
+    0
+  );
+
   // Filter borrowers by name based on search query
   const filteredBorrowers = borrowers.filter((borrower) =>
     borrower.name.toLowerCase().includes(searchName.toLowerCase())
@@ -184,12 +190,16 @@ function Borrowers() {
         </div>
       </div>
       <div className="table-responsive">
+        <caption>
+          Total Remaining Balance:{" "}
+          {formatNumberWithCommas(totalRemainingBalance)}
+        </caption>
         <table className="table">
           <thead>
             <tr>
               <th>Name</th>
               <th>Status</th>
-
+              <th>Remaining Balance</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -205,6 +215,7 @@ function Borrowers() {
                   >
                     {borrower?.fullyPaid ? "Fully Paid" : "Partially Paid"}
                   </td>
+                  <td>{formatNumberWithCommas(borrower?.remainingBalance)}</td>
                   <td>
                     <Link to={`/details/${borrower?.id}`}>
                       <button className="btn btn-sm btn-primary">

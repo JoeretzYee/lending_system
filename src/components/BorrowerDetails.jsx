@@ -113,6 +113,7 @@ function BorrowerDetails() {
       setIsModalOpen(false);
       setPaymentAmount("");
       setPaymentDate(new Date().toISOString().split("T")[0]);
+      window.location.reload();
     } catch (error) {
       console.error("Error adding payment:", error);
       Swal.fire({
