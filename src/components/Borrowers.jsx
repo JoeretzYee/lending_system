@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from "react";
 import AddBorrower from "../modals/AddBorrower";
 import EditBorrower from "../modals/EditBorrower";
-import { db, collection, onSnapshot, doc, deleteDoc } from "../firebase";
+import {
+  db,
+  collection,
+  onSnapshot,
+  doc,
+  deleteDoc,
+  where,
+  writeBatch,
+  query,
+  getDocs,
+} from "../firebase";
 import Swal from "sweetalert2";
 import { formatNumberWithCommas } from "../utils/formatNumberWithCommas";
 import { Link } from "react-router-dom";
@@ -52,8 +62,26 @@ function Borrowers() {
     if (result.isConfirmed) {
       try {
         const borrowerDoc = doc(db, "borrowers", borrowerId);
-        await deleteDoc(borrowerDoc);
-        Swal.fire("Deleted!", "The borrower has been deleted.", "success"); // Success alert
+        const paymentsRef = collection(db, "paymentsHistory");
+
+        // Query and delete related payment history
+        const paymentSnapshot = await getDocs(
+          query(paymentsRef, where("borrowerId", "==", borrowerId))
+        );
+
+        const batch = writeBatch(db);
+        paymentSnapshot.forEach((paymentDoc) => {
+          batch.delete(paymentDoc.ref);
+        });
+
+        await batch.commit(); // Delete all payment records in one go
+        await deleteDoc(borrowerDoc); // Delete borrower
+
+        Swal.fire(
+          "Deleted!",
+          "The borrower and their payment history have been deleted.",
+          "success"
+        ); // Success alert
       } catch (error) {
         console.error("Error deleting borrower: ", error);
         Swal.fire(
@@ -64,6 +92,33 @@ function Borrowers() {
       }
     }
   };
+
+  // const deleteBorrower = async (borrowerId) => {
+  //   // Show SweetAlert confirmation dialog
+  //   const result = await Swal.fire({
+  //     title: "Are you sure?",
+  //     text: "This action cannot be undone.",
+  //     icon: "warning",
+  //     showCancelButton: true,
+  //     confirmButtonText: "Yes, delete it!",
+  //     cancelButtonText: "No, cancel!",
+  //   });
+
+  //   if (result.isConfirmed) {
+  //     try {
+  //       const borrowerDoc = doc(db, "borrowers", borrowerId);
+  //       await deleteDoc(borrowerDoc);
+  //       Swal.fire("Deleted!", "The borrower has been deleted.", "success"); // Success alert
+  //     } catch (error) {
+  //       console.error("Error deleting borrower: ", error);
+  //       Swal.fire(
+  //         "Error!",
+  //         "There was an issue deleting the borrower.",
+  //         "error"
+  //       ); // Error alert
+  //     }
+  //   }
+  // };
 
   // Generate Excel Report
   const generateReport = () => {
