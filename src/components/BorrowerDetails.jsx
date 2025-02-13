@@ -9,6 +9,7 @@ import {
   collection,
   Timestamp,
   query,
+  deleteDoc,
   where,
   onSnapshot,
 } from "../firebase";
@@ -54,7 +55,7 @@ function BorrowerDetails() {
       (querySnapshot) => {
         const payments = [];
         querySnapshot.forEach((doc) => {
-          payments.push(doc.data());
+          payments.push({ ...doc.data(), id: doc.id });
         });
         // Sort payments by paymentDate in ascending order
         payments.sort((a, b) => a.paymentDate.seconds - b.paymentDate.seconds);
@@ -121,6 +122,66 @@ function BorrowerDetails() {
         title: "Error",
         text: "Failed to add payment. Please try again.",
       });
+    }
+  };
+
+  const handleDeletePayment = async (
+    paymentId,
+    paymentAmount,
+    remainingBalance
+  ) => {
+    if (
+      !paymentId ||
+      paymentAmount === undefined ||
+      remainingBalance === undefined
+    ) {
+      console.error("Invalid payment data:", {
+        paymentId,
+        paymentAmount,
+        remainingBalance,
+      });
+      Swal.fire("Error", "Payment data is invalid. Please try again.", "error");
+      return;
+    }
+
+    try {
+      // Confirm the deletion action
+      const result = await Swal.fire({
+        title: "Are you sure?",
+        text: "This action will delete the payment record!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, delete it!",
+      });
+
+      if (result.isConfirmed) {
+        // Get the payment document reference
+        const paymentDocRef = doc(db, "paymentsHistory", paymentId);
+
+        // Delete the payment document from the collection
+        await deleteDoc(paymentDocRef);
+
+        // Calculate the new remaining balance after deleting this payment
+        const newRemainingBalance = remainingBalance + paymentAmount;
+
+        // Update the borrower's remaining balance and total
+        await updateDoc(doc(db, "borrowers", id), {
+          remainingBalance: newRemainingBalance,
+          fullyPaid: newRemainingBalance === 0,
+        });
+
+        Swal.fire("Deleted!", "The payment has been deleted.", "success");
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+      Swal.fire(
+        "Error",
+        "Failed to delete payment. Please try again.",
+        "error"
+      );
     }
   };
 
@@ -228,6 +289,7 @@ function BorrowerDetails() {
                   <th scope="col">Date Pay</th>
                   <th scope="col">Amount</th>
                   <th scope="col">Remaining Balance</th>
+                  <th scope="col">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -243,6 +305,25 @@ function BorrowerDetails() {
                       {payment?.remainingBalance === 0
                         ? "0"
                         : formatNumberWithCommas(payment?.remainingBalance)}
+                    </td>
+                    <td>
+                      <button className="btn btn-sm btn-warning">
+                        {" "}
+                        <i className="bi bi-pencil"></i>
+                      </button>{" "}
+                      &nbsp;
+                      <button
+                        className="btn btn-sm btn-danger"
+                        onClick={() =>
+                          handleDeletePayment(
+                            payment.id,
+                            payment.amount,
+                            payment.remainingBalance
+                          )
+                        }
+                      >
+                        <i className="bi bi-trash"></i>
+                      </button>
                     </td>
                   </tr>
                 ))}
