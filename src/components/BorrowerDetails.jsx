@@ -260,6 +260,16 @@ function BorrowerDetails() {
               <h1> {borrower?.name}</h1>
             </li>
             <li className="list-group-item d-flex align-items-center justify-content-center">
+              <h5>Date Borrowed:</h5>&nbsp;{" "}
+              <h6>
+                {borrower?.dateBorrowed
+                  ? new Date(
+                      borrower.dateBorrowed.seconds * 1000
+                    ).toLocaleDateString()
+                  : "N/A"}
+              </h6>
+            </li>
+            <li className="list-group-item d-flex align-items-center justify-content-center">
               <h5>Principal:</h5>&nbsp;{" "}
               <h6>{formatNumberWithCommas(borrower?.principalAmount)}</h6>
             </li>

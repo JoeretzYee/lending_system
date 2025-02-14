@@ -61,7 +61,7 @@ function AddBorrower({ isOpen, onClose }) {
         principalAmount: parseFloat(principalAmount.replace(/,/g, "")),
         term: parseInt(term, 10),
         dateBorrowed: Timestamp.fromDate(new Date(dateBorrowed)),
-        total: calculateTotal(),
+        total: Number(calculateTotal()),
         remainingBalance: calculateTotal(),
         fullyPaid: false,
       });

@@ -1,6 +1,15 @@
 // EditPaymentModal.js
 import React, { useState, useEffect } from "react";
-import { doc, updateDoc } from "../firebase";
+import {
+  db,
+  doc,
+  updateDoc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "../firebase";
 import Swal from "sweetalert2";
 
 const EditPaymentModal = ({ payment, onClose }) => {
@@ -19,12 +28,94 @@ const EditPaymentModal = ({ payment, onClose }) => {
   const handleUpdatePayment = async (e) => {
     e.preventDefault();
     try {
-      await updateDoc(doc(db, "paymentsHistory", payment.id), {
+      const newAmount = Number(paymentAmount); // Convert to number
+      if (isNaN(newAmount) || newAmount <= 0) {
+        throw new Error("Invalid payment amount");
+      }
+
+      const paymentRef = doc(db, "paymentsHistory", payment.id);
+
+      // Update the payment record
+      await updateDoc(paymentRef, {
         paymentDate: new Date(paymentDate),
-        amount: parseFloat(paymentAmount),
+        amount: newAmount,
       });
-      Swal.fire("Success", "Payment updated successfully!", "success");
-      onClose();
+
+      // Fetch all payments for the borrower
+      const paymentsRef = collection(db, "paymentsHistory");
+      const paymentsQuery = query(
+        paymentsRef,
+        where("borrowerId", "==", payment.borrowerId)
+      );
+      const paymentsSnapshot = await getDocs(paymentsQuery);
+
+      let totalPaid = 0;
+      const updatedPayments = [];
+
+      paymentsSnapshot.forEach((doc) => {
+        const paymentData = doc.data();
+        const paymentAmount = Number(paymentData.amount);
+        if (isNaN(paymentAmount) || paymentAmount <= 0) {
+          console.error(
+            "Invalid payment amount in snapshot",
+            paymentData.amount
+          );
+        }
+        totalPaid += paymentAmount;
+        updatedPayments.push({
+          id: doc.id,
+          amount: paymentAmount,
+        });
+      });
+
+      // Get borrower details
+      const borrowerRef = doc(db, "borrowers", payment.borrowerId);
+      const borrowerSnap = await getDoc(borrowerRef);
+
+      if (borrowerSnap.exists()) {
+        const borrowerData = borrowerSnap.data();
+        const principalAmount = Number(borrowerData.principalAmount); // Get principal amount
+        const borrowerTotal = Number(borrowerData.total); // Get borrower total
+
+        // Ensure that the borrower amounts are valid
+        if (
+          isNaN(principalAmount) ||
+          principalAmount <= 0 ||
+          isNaN(borrowerTotal) ||
+          borrowerTotal <= 0
+        ) {
+          throw new Error("Invalid borrower data");
+        }
+
+        const remainingBalance = borrowerTotal - totalPaid;
+
+        // Log for debugging
+        console.log("principalAmount:", principalAmount);
+        console.log("totalPaid:", totalPaid);
+        console.log("remainingBalance:", remainingBalance);
+
+        // Check if remainingBalance is valid
+        if (isNaN(remainingBalance) || remainingBalance < 0) {
+          throw new Error("Invalid remaining balance");
+        }
+
+        // Update borrower's remaining balance
+        await updateDoc(borrowerRef, { remainingBalance });
+
+        // Update remaining balance in each payment record
+        const updatePromises = updatedPayments.map(({ id }) =>
+          updateDoc(doc(db, "paymentsHistory", id), { remainingBalance })
+        );
+        await Promise.all(updatePromises);
+      }
+
+      Swal.fire("Success", "Payment updated successfully!", "success").then(
+        () => {
+          // After the user clicks the confirm (OK) button
+          onClose();
+          window.location.reload();
+        }
+      );
     } catch (error) {
       console.error("Error updating payment:", error);
       Swal.fire("Error", "Failed to update payment.", "error");
