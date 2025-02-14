@@ -34,10 +34,12 @@ function Borrowers() {
   // Fetch borrowers in real-time
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "borrowers"), (snapshot) => {
-      const borrowersList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const borrowersList = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
       setBorrowers(borrowersList);
     });
 

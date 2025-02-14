@@ -14,12 +14,15 @@ import {
   onSnapshot,
 } from "../firebase";
 import { formatNumberWithCommas } from "../utils/formatNumberWithCommas";
+import EditPaymentModal from "../modals/EditPaymentModal";
 import Swal from "sweetalert2";
 import * as XLSX from "xlsx";
 import { writeFile, utils } from "xlsx";
 
 function BorrowerDetails() {
   const { id } = useParams(); // Get the borrower ID from the URL
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState(null);
   const [borrower, setBorrower] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [paymentDate, setPaymentDate] = useState(
@@ -79,6 +82,10 @@ function BorrowerDetails() {
   // Handle the payment amount change
   const handlePaymentAmountChange = (e) => {
     setPaymentAmount(e.target.value);
+  };
+  const handleEditPaymentClick = (payment) => {
+    setSelectedPayment(payment);
+    setIsEditModalOpen(true);
   };
 
   // Handle the form submission (saving payment)
@@ -307,7 +314,10 @@ function BorrowerDetails() {
                         : formatNumberWithCommas(payment?.remainingBalance)}
                     </td>
                     <td>
-                      <button className="btn btn-sm btn-warning">
+                      <button
+                        className="btn btn-sm btn-warning"
+                        onClick={() => handleEditPaymentClick(payment)}
+                      >
                         {" "}
                         <i className="bi bi-pencil"></i>
                       </button>{" "}
@@ -387,6 +397,14 @@ function BorrowerDetails() {
                 </div>
               </div>
             </div>
+          )}
+          {isEditModalOpen && (
+            <EditPaymentModal
+              isOpen={isEditModalOpen}
+              onClose={() => setIsEditModalOpen(false)}
+              payment={selectedPayment}
+              borrowerId={id} // Pass borrower ID for updating payment
+            />
           )}
         </div>
       ) : (
