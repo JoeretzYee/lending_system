@@ -187,7 +187,7 @@ function Borrowers() {
       <div className="table-responsive">
         <div className="d-flex justify-content-between">
           <caption>
-            Total Remaining Balance:{" "}
+            <strong> Grand Total:</strong>{" "}
             {formatNumberWithCommas(totalBalanceWithCash)}
           </caption>
           <div>
