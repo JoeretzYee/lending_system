@@ -16,7 +16,7 @@ function EditBorrower({ borrower, isOpen, onClose }) {
   // Set the form fields with the borrower data when the modal opens
   useEffect(() => {
     if (isOpen && borrower) {
-      const detail = borrower.details[0]; // Assuming you are editing the first detail
+      const detail = borrower; // Assuming you are editing the first detail
       setName(borrower.name);
       setPrincipalAmount(detail.principalAmount);
       setTerm(detail.term);
