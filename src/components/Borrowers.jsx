@@ -13,16 +13,23 @@ import {
   getDocs,
 } from "../firebase";
 import Swal from "sweetalert2";
+import AddCashInHand from "../modals/AddCashInHand";
 import { formatNumberWithCommas } from "../utils/formatNumberWithCommas";
 import { Link } from "react-router-dom";
 import * as XLSX from "xlsx";
+import RemoveCashInHand from "../modals/RemoveCashInHand";
 
 function Borrowers() {
   const [isEditBorrowerModalOpen, setIsEditBorrowerModalOpen] = useState(false);
+  const [isCashInHandModalOpen, setIsCashInHandModalOpen] = useState(false);
+  const [isRemoveCashInHandModalOpen, setIsRemoveCashInHandModalOpen] =
+    useState(false);
+
   const [selectedBorrower, setSelectedBorrower] = useState(null);
   const [isAddBorrowerModalOpen, setIsAddBorrowerModalOpen] = useState(false);
   const [borrowers, setBorrowers] = useState([]);
   const [searchName, setSearchName] = useState("");
+  const [cashInHand, setCashInHand] = useState("");
 
   // Fetch borrowers in real-time
   useEffect(() => {
@@ -36,12 +43,27 @@ function Borrowers() {
 
     return () => unsubscribe(); // Cleanup on unmount
   }, []);
+  // Fetch cash in hand in real-time
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "cashInHand"), (snapshot) => {
+      if (!snapshot.empty) {
+        const docData = snapshot.docs[0].data(); // Get the first document
+        setCashInHand(docData);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Calculate total remaining balance
   const totalRemainingBalance = borrowers.reduce(
     (sum, borrower) => sum + (Number(borrower.remainingBalance) || 0),
     0
   );
+
+  const totalBalanceWithCash =
+    totalRemainingBalance +
+    (Number(cashInHand?.cashHand || 0) + (Number(cashInHand?.cashIn) || 0));
 
   // Filter borrowers by name based on search query
   const filteredBorrowers = borrowers.filter((borrower) =>
@@ -98,33 +120,6 @@ function Borrowers() {
       }
     }
   };
-
-  // const deleteBorrower = async (borrowerId) => {
-  //   // Show SweetAlert confirmation dialog
-  //   const result = await Swal.fire({
-  //     title: "Are you sure?",
-  //     text: "This action cannot be undone.",
-  //     icon: "warning",
-  //     showCancelButton: true,
-  //     confirmButtonText: "Yes, delete it!",
-  //     cancelButtonText: "No, cancel!",
-  //   });
-
-  //   if (result.isConfirmed) {
-  //     try {
-  //       const borrowerDoc = doc(db, "borrowers", borrowerId);
-  //       await deleteDoc(borrowerDoc);
-  //       Swal.fire("Deleted!", "The borrower has been deleted.", "success"); // Success alert
-  //     } catch (error) {
-  //       console.error("Error deleting borrower: ", error);
-  //       Swal.fire(
-  //         "Error!",
-  //         "There was an issue deleting the borrower.",
-  //         "error"
-  //       ); // Error alert
-  //     }
-  //   }
-  // };
 
   // Generate Excel Report
   const generateReport = () => {
@@ -190,10 +185,46 @@ function Borrowers() {
         </div>
       </div>
       <div className="table-responsive">
-        <caption>
-          Total Remaining Balance:{" "}
-          {formatNumberWithCommas(totalRemainingBalance)}
-        </caption>
+        <div className="d-flex justify-content-between">
+          <caption>
+            Total Remaining Balance:{" "}
+            {formatNumberWithCommas(totalBalanceWithCash)}
+          </caption>
+          <div>
+            <div>
+              <div>
+                <button
+                  className="btn btn-sm btn-primary"
+                  onClick={() => setIsCashInHandModalOpen(true)}
+                >
+                  <i className="bi bi-plus"></i>{" "}
+                </button>
+                <AddCashInHand
+                  isOpen={isCashInHandModalOpen}
+                  onClose={() => setIsCashInHandModalOpen(false)}
+                />
+                &nbsp;
+                <button
+                  className="btn btn-sm btn-warning"
+                  onClick={() => setIsRemoveCashInHandModalOpen(true)}
+                >
+                  <i className="bi bi-dash"></i>
+                </button>
+                <RemoveCashInHand
+                  isOpen={isRemoveCashInHandModalOpen}
+                  onClose={() => setIsRemoveCashInHandModalOpen(false)}
+                />
+              </div>
+              <small>Cash In Bank:</small> &nbsp;
+              <span>{formatNumberWithCommas(cashInHand?.cashIn || 0)}</span>
+            </div>
+            <div>
+              <small>Cash On Hand:</small> &nbsp;
+              <span>{formatNumberWithCommas(cashInHand?.cashHand || 0)}</span>
+            </div>
+          </div>
+        </div>
+
         <table className="table">
           <thead>
             <tr>
