@@ -44,15 +44,11 @@ function EditBorrower({ borrower, isOpen, onClose }) {
       const borrowerRef = doc(db, "borrowers", borrower.id);
       await updateDoc(borrowerRef, {
         name,
-        details: [
-          {
-            principalAmount: parseFloat(principalAmount),
-            term: parseInt(term, 10),
-            dateBorrowed: new Date(dateBorrowed),
-            total: calculateTotal(),
-            remainingBalance: calculateTotal(),
-          },
-        ],
+        principalAmount: parseFloat(principalAmount),
+        term: parseInt(term, 10),
+        dateBorrowed: new Date(dateBorrowed),
+        total: calculateTotal(),
+        remainingBalance: calculateTotal(),
       });
       onClose(); // Close the modal after update
       Swal.fire({
