@@ -164,7 +164,7 @@ function Borrowers() {
           <input
             type="text"
             className="form-control"
-            placeholder="Search...."
+            placeholder="Search Name...."
             value={searchName}
             onChange={(e) => setSearchName(e.target.value)}
           />
