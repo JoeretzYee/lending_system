@@ -227,7 +227,7 @@ function Borrowers() {
           </div>
         </div>
 
-        <table className="table">
+        <table className="table table-responsive table-hover table-bordered">
           <thead>
             <tr>
               <th>Name</th>
