@@ -248,7 +248,13 @@ function Borrowers() {
                   >
                     {borrower?.fullyPaid ? "Fully Paid" : "Partially Paid"}
                   </td>
-                  <td>{formatNumberWithCommas(borrower?.remainingBalance)}</td>
+                  <td>
+                    {formatNumberWithCommas(
+                      borrower?.remainingBalance === 0
+                        ? "0"
+                        : borrower?.remainingBalance
+                    )}
+                  </td>
                   <td>
                     <Link to={`/details/${borrower?.id}`}>
                       <button className="btn btn-sm btn-primary">
