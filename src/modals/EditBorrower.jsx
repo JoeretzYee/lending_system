@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { db, doc, updateDoc } from "../firebase";
+import {
+  db,
+  doc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "../firebase";
 import Swal from "sweetalert2";
 import { formatNumberWithCommas } from "../utils/formatNumberWithCommas";
 
@@ -10,30 +18,66 @@ function EditBorrower({ borrower, isOpen, onClose }) {
   const [total, setTotal] = useState("");
   const [remainingBalance, setRemainingBalance] = useState("");
   const [dateBorrowed, setDateBorrowed] = useState("");
+  const [amountPaid, setAmountPaid] = useState(0); // Track total amount paid
 
-  const interestRate = 0.07;
+  const interestRate = 0.07; // 7% interest rate
+
+  // Fetch payment history and calculate total amount paid
+  useEffect(() => {
+    const fetchPayments = async () => {
+      if (isOpen && borrower) {
+        const paymentsQuery = query(
+          collection(db, "paymentsHistory"),
+          where("borrowerId", "==", borrower.id)
+        );
+        const paymentsSnapshot = await getDocs(paymentsQuery);
+        let totalPaid = 0;
+        paymentsSnapshot.forEach((doc) => {
+          totalPaid += doc.data().amount;
+        });
+        setAmountPaid(totalPaid); // Set total amount paid
+      }
+    };
+
+    fetchPayments();
+  }, [isOpen, borrower]);
 
   // Set the form fields with the borrower data when the modal opens
   useEffect(() => {
     if (isOpen && borrower) {
-      const detail = borrower; // Assuming you are editing the first detail
       setName(borrower.name);
-      setPrincipalAmount(detail.principalAmount);
-      setTerm(detail.term);
-      setDateBorrowed(detail.dateBorrowed.toDate().toISOString().split("T")[0]); // Format date for input
-      setTotal(detail.total);
-      setRemainingBalance(detail.remainingBalance);
+      setPrincipalAmount(borrower.principalAmount.toString()); // Ensure string for input
+      setTerm(borrower.term.toString()); // Ensure string for input
+      setDateBorrowed(
+        borrower.dateBorrowed.toDate().toISOString().split("T")[0]
+      ); // Format date for input
+      setTotal(borrower.total);
+      setRemainingBalance(borrower.remainingBalance);
     }
   }, [isOpen, borrower]);
 
-  // Function to calculate the total amount
-  const calculateTotal = () => {
-    const principal = parseFloat(principalAmount);
-    const months = parseInt(term, 10);
-    if (isNaN(principal) || isNaN(months)) {
+  // Function to calculate the total amount based on the principal, term, and interest rate
+  const calculateTotal = (principal, term) => {
+    const principalNum = parseFloat(principal);
+    const termNum = parseInt(term, 10);
+    if (isNaN(principalNum) || isNaN(termNum)) {
       return ""; // Return an empty string if input is invalid
     }
-    return (principal * (1 + interestRate * months)).toFixed(2);
+    return (principalNum * (1 + interestRate * termNum)).toFixed(2);
+  };
+
+  // Function to handle term input changes
+  const handleTermChange = (e) => {
+    const newTerm = e.target.value;
+    setTerm(newTerm); // Update term state
+
+    // Recalculate total and remaining balance
+    const newTotal = calculateTotal(principalAmount, newTerm);
+    const newRemainingBalance = (parseFloat(newTotal) - amountPaid).toFixed(2);
+
+    // Update state
+    setTotal(newTotal);
+    setRemainingBalance(newRemainingBalance);
   };
 
   // Handle form submission to update borrower data
@@ -47,8 +91,8 @@ function EditBorrower({ borrower, isOpen, onClose }) {
         principalAmount: parseFloat(principalAmount),
         term: parseInt(term, 10),
         dateBorrowed: new Date(dateBorrowed),
-        total: calculateTotal(),
-        remainingBalance: calculateTotal(),
+        total: parseFloat(total),
+        remainingBalance: parseFloat(remainingBalance),
       });
       onClose(); // Close the modal after update
       Swal.fire({
@@ -100,7 +144,7 @@ function EditBorrower({ borrower, isOpen, onClose }) {
                     onChange={(e) => {
                       const value = e.target.value.replace(/,/g, "");
                       setPrincipalAmount(value);
-                      setTotal(calculateTotal()); // Update the total field
+                      setTotal(calculateTotal(value, term)); // Update the total field
                     }}
                     required
                   />
@@ -111,7 +155,7 @@ function EditBorrower({ borrower, isOpen, onClose }) {
                     type="number"
                     className="form-control"
                     value={term}
-                    onChange={(e) => setTerm(e.target.value)}
+                    onChange={handleTermChange} // Use handleTermChange directly
                     required
                   />
                 </div>
@@ -120,7 +164,16 @@ function EditBorrower({ borrower, isOpen, onClose }) {
                   <input
                     type="text"
                     className="form-control"
-                    value={formatNumberWithCommas(calculateTotal())}
+                    value={formatNumberWithCommas(total)}
+                    disabled
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Remaining Balance:</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={formatNumberWithCommas(remainingBalance)}
                     disabled
                   />
                 </div>
